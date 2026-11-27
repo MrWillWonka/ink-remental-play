@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- viewport-fit=cover: without it iOS reports every safe-area inset as 0, and the CSS's notch and home-bar padding does nothing. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <title>Ink-remental</title>
+    <!-- Link previews (iMessage, Discord). The description is the playtest welcome's own line. DRAFT.
+         og:image must be a full address, so it names the public playtest link. -->
+    <meta property="og:title" content="Ink-remental" />
+    <meta property="og:description" content="Launch your pen, earn Blots, buy upgrades from the Squid, and blot out the sheet to 100%." />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="https://mrwillwonka.github.io/ink-remental-play/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <!-- Add to Home Screen: full screen, dark status bar over the game (the CSS keeps the HUD clear of it). -->
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <meta name="theme-color" content="#1d1a17" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Ink-remental" />
+    <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png" />
+    <!-- Until the game's stylesheet lands, show the dark backdrop, not a white page of raw buttons (Will, 2026-11-25).
+         If the stylesheet never arrives (a bad connection), the page shows anyway after 4 seconds rather than staying blank. -->
+    <style>html,body{background:#1d1a17;margin:0}body{visibility:hidden;animation:0s 4s forwards ink-show}@keyframes ink-show{to{visibility:visible}}</style>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet" />
+    <script type="module" crossorigin src="./assets/index-BNVGQiVR.js"></script>
+    <link rel="modulepreload" crossorigin href="./assets/three-B0IofFJO.js">
+    <link rel="stylesheet" crossorigin href="./assets/index-E6q_tjjS.css">
+  </head>
+  <body>
+    <div id="warmup-overlay" class="warmup-overlay" aria-live="polite">
+      <div class="warmup-card">
+        <div class="warmup-title">Ink-remental</div>
+        <div class="warmup-stage" id="warmup-stage">
+          <div class="warmup-splats" aria-hidden="true">
+            <span class="ws ws1"></span>
+            <span class="ws ws2"></span>
+            <span class="ws ws3"></span>
+            <span class="ws ws4"></span>
+            <span class="ws ws5"></span>
+            <span class="ws ws6"></span>
+            <span class="ws ws7"></span>
+            <span class="ws ws8"></span>
+            <span class="ws ws9"></span>
+            <span class="ws ws10"></span>
+            <span class="ws ws11"></span>
+            <span class="ws ws12"></span>
+            <span class="ws ws13"></span>
+            <span class="ws ws14"></span>
+            <span class="ws ws15"></span>
+            <span class="ws ws16"></span>
+            <span class="ws ws17"></span>
+            <span class="ws ws18"></span>
+          </div>
+          <div class="warmup-track">
+            <div class="warmup-fill" id="warmup-fill"></div>
+          </div>
+          <div class="warmup-pen-lane" id="warmup-pen" aria-hidden="true">
+            <svg class="warmup-pen-svg" viewBox="0 0 46 44" width="46" height="44">
+              <path d="M6 5 L14 3 L32 25 L25 30 Z" fill="#1b1c26" stroke="#0d0e14" stroke-width="2" stroke-linejoin="round" />
+              <path d="M11 10 L24 25" stroke="#4a5170" stroke-width="1.7" stroke-linecap="round" />
+              <path d="M10 8.5 L17 5.5" stroke="#f2c14e" stroke-width="2.8" stroke-linecap="round" />
+              <path d="M25 30 L32 25 L34 29 L28 33 Z" fill="#f2c14e" stroke="#0d0e14" stroke-width="1.5" stroke-linejoin="round" />
+              <path d="M28 33 L34 29 L39 38 Z" fill="#ffd97a" stroke="#0d0e14" stroke-width="1.5" stroke-linejoin="round" />
+              <circle cx="33.2" cy="32.2" r="1.1" fill="#0d0e14" />
+            </svg>
+          </div>
+        </div>
+        <div class="warmup-sub" id="warmup-sub">Warming up the nib…</div>
+      </div>
+    </div>
+    <div id="stage"><canvas id="game"></canvas></div>
+
+    <div id="hud">
+      <div class="hud-row">
+        <div class="stat">
+          <span class="label">Ink</span>
+          <div id="ink-bar"><div id="ink-fill"></div></div>
+        </div>
+        <div class="stat">
+          <span class="label">Paper</span>
+          <span id="coverage" class="value">0.0%</span>
+        </div>
+        <div class="stat" id="desk-stat" hidden>
+          <span class="label">Desk</span>
+          <span id="desk-coverage" class="value">0.0%</span>
+        </div>
+        <div class="stat" id="table-stat" hidden>
+          <span class="label">Tables</span>
+          <span id="table-coverage" class="value">0.0%</span>
+        </div>
+        <div class="stat">
+          <span class="label">Time</span>
+          <span id="time" class="value">0.0s</span>
+        </div>
+        <div class="stat">
+          <span class="label">Blots</span>
+          <span id="blots" class="value">0</span>
+        </div>
+      </div>
+      <div class="hud-foot"><span id="scheme"></span> · <span id="fps">-- fps</span> <span id="mouse-note"></span></div>
+      <div class="hud-chips" id="hud-chips">
+        <button id="hud-toggle" class="chip menu-toggle" type="button" aria-expanded="false" title="Show or hide options">
+          <span class="menu-nib" aria-hidden="true">✦</span>
+          <span class="menu-label">Menu</span>
+        </button>
+        <button id="stop-btn" class="chip stop-chip" hidden>Stop run</button>
+        <div class="hud-drawer" id="hud-drawer">
+          <button id="pause-btn" class="chip">Pause</button>
+          <button id="view" class="chip"></button>
+          <button id="coop-btn" class="chip coop-chip">Co-op</button>
+          <button id="test-btn" class="chip dev-chip">Test panel (Tab)</button>
+        </div>
+      </div>
+      <div id="wip-pill" class="wip-pill" hidden>Early WIP · Beyond the paper is not final gameplay</div>
+      <div id="quest" hidden>
+        <div class="quest-head"><span id="quest-title"></span><span id="quest-count"></span></div>
+        <div id="quest-rows"></div>
+        <div id="quest-goal" hidden></div>
+      </div>
+    </div>
+
+    <div id="squid-say"></div>
+    <div id="toast-stack" aria-live="polite"></div>
+
+    <div id="hint"></div>
+    <div id="controls-coach" hidden>
+      <div class="cc-head">
+        <span class="cc-badge">★ NEW DESK CONTROLS</span>
+        <button type="button" id="cc-dismiss" class="cc-dismiss">Got it!</button>
+      </div>
+      <div id="cc-rows" class="cc-rows"></div>
+    </div>
+    <div id="callout"></div>
+
+    <div id="coop-early" hidden>
+      <span id="coop-early-msg">Out of ink · Watching partner</span>
+      <div class="coop-early-btns">
+        <button type="button" id="coop-early-shop" class="btn">Upgrades</button>
+        <button type="button" id="coop-early-ready" class="btn primary">Ready</button>
+      </div>
+    </div>
+
+    <div id="result">
+      <div class="card">
+        <div id="result-title" class="label">Out of ink</div>
+        <div id="result-coverage" class="big">0.0%</div>
+        <div id="result-label" class="label">of the paper covered</div>
+        <div id="result-detail" class="detail"></div>
+        <div id="result-quip" class="detail"></div>
+        <div id="result-blots" class="earned"></div>
+        <div class="buttons">
+          <button id="open-tree" class="btn">Upgrades</button>
+          <button id="watch-replay" class="btn replay-btn" hidden>Watch Replay</button>
+          <button id="go-again" class="btn primary">Go again</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="pause">
+      <div class="card">
+        <div class="big">Paused</div>
+        <div class="buttons">
+          <button id="pause-stop" class="btn">Stop run</button>
+          <button id="pause-resume" class="btn primary">Carry on (Esc)</button>
+        </div>
+        <div id="pause-tools" class="buttons"></div>
+        <div id="pause-note"></div>
+      </div>
+    </div>
+
+    <div id="playtest-modal" role="dialog" aria-modal="true" aria-labelledby="pt-title" hidden>
+      <div class="card playtest-card">
+        <div id="pt-badge" class="pt-badge">★ PLAYTEST</div>
+        <div id="pt-title" class="pt-title">Ink-remental</div>
+        <p id="pt-body" class="pt-body"></p>
+        <p id="pt-note" class="pt-note"></p>
+        <div id="pt-extra"></div>
+        <div class="buttons">
+          <button type="button" id="pt-secondary" class="btn" hidden></button>
+          <button type="button" id="pt-primary" class="btn primary">Start Blotting!</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="tree" data-view="tank">
+      <div class="shop-water-tint" aria-hidden="true"></div>
+      <div class="shop-top-left">
+        <div class="shop-wallet">
+          <span class="blot-dot" aria-hidden="true"></span>
+          <span id="tree-blots" class="value">0</span>
+          <span class="label">Blots</span>
+        </div>
+        <div id="shop-stats" class="shop-stats" aria-label="Current pen stats"></div>
+      </div>
+      <div class="tank-view">
+        <div class="shop-top-right">
+          <div class="shop-count">
+            <span id="tree-progress" class="tree-progress"></span>
+            <span class="count-bar"><span id="tree-progress-bar"></span></span>
+          </div>
+          <button type="button" id="open-pen-case" class="btn case-jump">
+            <span id="case-jump-swatch" class="case-jump-swatch" aria-hidden="true"></span>
+            <span id="case-jump-text" class="case-jump-text">Pen Case</span>
+            <span id="case-jump-badge" class="case-jump-badge">1/9</span>
+          </button>
+        </div>
+
+        <!-- Transparent full-screen hit & label layer projected directly onto the 3D bubbles & 3D chests inside the tank -->
+        <div id="tank-layer" class="tank-layer">
+          <div id="tank-cols" class="tank-cols" aria-hidden="true"></div>
+          <div id="tank-bubbles" class="tank-bubbles"></div>
+          <div id="tank-chests" class="tank-chests"></div>
+        </div>
+
+        <!-- Mobile / narrow-screen horizontal pan indicators -->
+        <button type="button" id="pan-left" class="pan-arrow left" aria-label="Pan bubbles left" hidden>‹</button>
+        <button type="button" id="pan-right" class="pan-arrow right" aria-label="Pan bubbles right" hidden>›</button>
+
+        <div id="squid-shop-say" class="squid-bubble">“Hmph. That blasted sun-lamp’s cooking my tank again.”</div>
+
+        <!-- Contextual light-direction coach pill (first buy, Desk chest unlock, Pen Case unlock) -->
+        <div id="shop-coach" class="shop-coach" hidden></div>
+
+        <!-- Anchored floating inspection popover positioned right beside the hovered/selected bubble -->
+        <div id="bubble-popover" class="bubble-popover" hidden>
+          <div class="pop-head">
+            <span id="pop-icon" class="pop-icon" aria-hidden="true"></span>
+            <span id="pop-title" class="pop-title"></span>
+            <span id="pop-toy" class="pop-toy" hidden>★ MECHANIC</span>
+          </div>
+          <div id="pop-desc" class="pop-desc"></div>
+          <div id="pop-delta" class="pop-delta" hidden></div>
+          <div class="pop-foot">
+            <span id="pop-status" class="pop-status"></span>
+          </div>
+        </div>
+
+        <!-- Bottom-right primary CTA to launch the next run -->
+        <button id="tree-close" class="btn primary shop-close">Next Run ›</button>
+      </div>
+      <div class="case-view">
+        <div class="case-window" aria-hidden="true"></div>
+        <div id="case-slots"></div>
+        <div class="case-title">Pen Display Case</div>
+        <div id="pen-card" class="pen-card">
+          <div id="pen-card-name" class="pen-title"></div>
+          <div id="pen-card-blurb" class="pen-blurb"></div>
+          <div id="pen-card-ink" class="pen-ink"><span>Ink</span><span id="pen-card-swatch" class="ink-stroke"></span></div>
+          <div class="pen-stats"></div>
+          <button type="button" id="pen-card-act" class="btn primary pen-act">Use this pen</button>
+        </div>
+        <div class="case-buttons">
+          <button type="button" id="case-back" class="btn">‹ Upgrades</button>
+          <button type="button" id="case-close" class="btn primary">Next Run ›</button>
+        </div>
+      </div>
+      <div class="shop-wash" aria-hidden="true"></div>
+    </div>
+
+  </body>
+</html>
